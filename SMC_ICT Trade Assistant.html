@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMC/ICT Trade Assistant</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:#0f172a;color:#e2e8f0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.card{background:#1e293b;border:1px solid #334155;border-radius:1rem}
+.lbl{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:600}
+input,select,textarea{background:#0f172a;border:1px solid #334155;border-radius:.6rem;color:#e2e8f0;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#3b82f6}
+</style>
+</head>
+<body>
+<nav class="border-b border-slate-700/60 bg-[#0f172a]/90 sticky top-0 z-20 backdrop-blur">
+ <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+  <div class="font-semibold text-sm sm:text-base flex items-center gap-2"><span class="w-7 h-7 rounded-lg bg-blue-500 grid place-items-center text-xs font-bold">S</span>SMC/ICT Assistant</div>
+  <div class="flex bg-slate-800 rounded-full p-1 text-sm">
+   <button data-view="dash" class="vbtn px-3 sm:px-4 py-1 rounded-full transition-all duration-200">Dashboard</button>
+   <button data-view="rules" class="vbtn px-3 sm:px-4 py-1 rounded-full transition-all duration-200">System Rules</button>
+  </div>
+  <div class="text-xs text-slate-400 hidden sm:block">Trader &middot; <button class="hover:text-slate-200 transition-all duration-200" onclick="toast('Local-only app: nothing to sign out of')">Sign out</button></div>
+ </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+<section id="dash">
+ <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+  <div>
+   <div class="lbl">Pre-trade dashboard &middot; New York session</div>
+   <h1 class="text-2xl sm:text-3xl font-bold mt-1">SMC/ICT Trade Assistant</h1>
+   <p class="text-slate-400 text-sm mt-1">Take your time. Check your setup. Chart on the left, system on the right&hellip;</p>
+  </div>
+  <div class="flex items-center gap-3">
+   <div class="w-48">
+    <div class="flex justify-between lbl mb-1"><span>Confirmed</span><span id="cnt" class="text-slate-200">0 / 13</span></div>
+    <div class="h-2 bg-slate-700 rounded-full overflow-hidden"><div id="bar" class="h-full bg-blue-500 transition-all duration-300" style="width:0%"></div></div>
+   </div>
+   <button id="clear" class="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-600 hover:border-red-400 hover:text-red-300 transition-all duration-200">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Clear</button>
+  </div>
+ </header>
+
+ <div class="grid lg:grid-cols-5 gap-6">
+  <div class="lg:col-span-3 space-y-6">
+   <div class="card p-5">
+    <div class="flex items-center justify-between mb-3"><h2 class="font-semibold">Analysis canvas</h2>
+     <button id="addmore" class="hidden text-xs px-3 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-all duration-200">Add more</button></div>
+    <div id="drop" class="border-2 border-dashed border-slate-600 rounded-xl p-4 min-h-[180px] flex items-center justify-center text-center cursor-pointer hover:border-blue-500 transition-all duration-200">
+     <p id="droptxt" class="text-slate-400 text-sm">Drop screenshots, PDFs, docs or any files or click to browse</p>
+     <div id="thumbs" class="hidden w-full grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+    </div>
+    <input id="file" type="file" multiple class="hidden">
+   </div>
+
+   <div class="card p-5">
+    <div class="flex items-center justify-between mb-3"><h2 class="font-semibold">Trade setup notes &amp; confluences</h2>
+     <span id="saved" class="opacity-0 transition-opacity duration-300 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">AUTO-SAVED</span></div>
+    <textarea id="notes" rows="5" class="w-full p-3 text-sm" placeholder="PSY level touched, POI / FVG, volume profile POC..."></textarea>
+   </div>
+
+   <div class="card p-5">
+    <h2 class="font-semibold mb-3">System discipline</h2>
+    <div id="tabs" class="flex flex-wrap gap-2 mb-4"></div>
+    <div id="items" class="space-y-2"></div>
+   </div>
+  </div>
+
+  <div class="lg:col-span-2 space-y-6">
+   <div class="card p-5">
+    <h2 class="font-semibold mb-4">Position sizing</h2>
+    <label class="lbl">Live account balance (ZAR)</label>
+    <div class="relative mt-1 mb-3"><span class="absolute left-3 top-2 text-slate-400">R</span>
+     <input id="bal" type="number" min="0" step="0.01" placeholder="0.00" class="w-full pl-7 pr-3 py-2"></div>
+    <label class="lbl">Instrument</label>
+    <select id="pair" class="w-full mt-1 mb-4 px-3 py-2"></select>
+    <div class="rounded-xl bg-[#0f172a] border border-slate-700 p-4 text-center">
+     <div class="lbl">Allowed lot size</div>
+     <div id="lot" class="text-4xl font-bold text-blue-400 my-1">0.00</div>
+     <div id="lotnote" class="text-xs text-slate-400 min-h-[1rem]"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mt-3 text-center">
+     <div class="rounded-lg bg-red-500/10 border border-red-500/30 p-2"><div class="lbl text-red-300">Loss at SL</div><div id="loss" class="font-semibold">R0.00</div></div>
+     <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-2"><div class="lbl text-emerald-300">Profit at min TP</div><div id="profit" class="font-semibold">R0.00</div></div>
+    </div>
+    <p id="acct" class="text-[11px] text-slate-500 mt-3"></p>
+    <div class="mt-4 space-y-2 text-sm">
+     <div class="rounded-lg border-l-4 border-red-400 bg-slate-900/60 p-3"><div class="lbl">Stop loss cap</div>Max 5 pips / adjacent Fib level (50 pips BTCUSD)</div>
+     <div class="rounded-lg border-l-4 border-emerald-400 bg-slate-900/60 p-3"><div class="lbl">Take profit</div>Min 15 pips, -61.8% to -100% Fib (150 pips BTCUSD)</div>
+     <div class="rounded-lg border-l-4 border-blue-400 bg-slate-900/60 p-3"><div class="lbl">Breakeven trigger</div>0.0% Fib break &rarr; SL to entry</div>
+    </div>
+   </div>
+   <div class="card p-5" id="coach">
+    <div class="flex items-center justify-between mb-1"><h2 class="font-semibold">System coach</h2><span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-blue-500/15 text-blue-400">AI</span></div>
+    <p id="coachoff" class="hidden text-sm text-slate-400">The AI coach only runs when this page is opened from its claude.ai link. It isn’t available in a downloaded copy.</p>
+    <div id="coachon" class="hidden">
+     <p class="text-xs text-slate-400 mb-3">Ask about your screenshots, notes and checklist. It answers strictly from your system rules.</p>
+     <div class="flex flex-wrap gap-2 mb-3" id="quick">
+      <button data-q="Give me the full summary of this setup: bias, what is not covered from the checklist, and what should happen next." class="text-xs px-2.5 py-1 rounded-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-all duration-200">Full summary</button>
+      <button data-q="Review my current setup against the system. Look at my screenshots and notes and tell me which checklist items are supported, which are missing, and what to double-check." class="text-xs px-2.5 py-1 rounded-full bg-slate-700/60 hover:bg-slate-700 transition-all duration-200">Review my setup</button>
+      <button data-q="Using the golden-period entry rules, is this a valid 61.8% entry? Which confluences are present and which are missing?" class="text-xs px-2.5 py-1 rounded-full bg-slate-700/60 hover:bg-slate-700 transition-all duration-200">Valid entry?</button>
+      <button data-q="Given my balance and instrument, walk me through lot size, stop loss, take profit and breakeven." class="text-xs px-2.5 py-1 rounded-full bg-slate-700/60 hover:bg-slate-700 transition-all duration-200">Size this trade</button>
+     </div>
+     <div id="msgs" class="space-y-2 max-h-80 overflow-y-auto mb-3"></div>
+     <label id="inclwrap" class="flex items-center gap-2 text-xs text-slate-400 mb-2"><input id="incl" type="checkbox" checked class="accent-blue-500"> Include my screenshots (images only)</label>
+     <div class="flex gap-2"><input id="q" type="text" placeholder="Ask about this setup..." class="flex-1 px-3 py-2 text-sm min-w-0">
+      <button id="send" class="px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-500 transition-all duration-200">Send</button>
+      <button id="stop" class="hidden px-3 py-2 rounded-lg border border-slate-600 text-sm">Stop</button></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="rules" class="hidden max-w-3xl mx-auto space-y-5">
+ <div><h1 class="text-2xl sm:text-3xl font-bold">System Rules &amp; Ratios</h1>
+  <p class="text-slate-400 text-sm mt-1">The fixed logic behind every checklist item. Nothing here is discretionary&hellip;</p></div>
+ <div class="card p-5"><h3 class="font-semibold mb-2">Instruments &amp; priority</h3><ul class="text-sm text-slate-300 space-y-1 list-disc pl-5">
+  <li>DXY first: analysed for dollar bias.</li>
+  <li><b>1st priority:</b> XAUUSD, GBPUSD, EURUSD &mdash; analysed if news events support the currencies.</li>
+  <li><b>2nd priority:</b> USDCHF, USDCAD &mdash; only when news for those currencies is present that day, 9:00&ndash;17:00 SAST.</li>
+  <li><b>Crypto (weekend):</b> BTCUSD &mdash; only traded if balance exceeds R100.</li></ul></div>
+ <div class="card p-5"><h3 class="font-semibold mb-2">Risk &amp; scaling</h3><ul class="text-sm text-slate-300 space-y-1 list-disc pl-5">
+  <li>Base margin: 0.01 lots for every R50 of balance. Under R50 = 0.01; R50&ndash;R100 = 0.02; continues in R50 intervals.</li>
+  <li>Stop loss cap: max 5 pips on standard FX, 50 pips on BTCUSD, at the adjacent Fib level.</li>
+  <li>Take profit: min 15 pips (150 on BTCUSD), between the -61.8% and -100% expansion.</li>
+  <li>Breakeven: a break of 0.0% Fib moves SL to entry immediately.</li></ul></div>
+ <div class="card p-5"><h3 class="font-semibold mb-2">15-minute HTF alignment</h3><ul class="text-sm text-slate-300 space-y-1 list-disc pl-5">
+  <li>Mark 00:00 Monday external high/low. Read structure on the line chart.</li>
+  <li>Plot 15m PSY levels: 0.1000, 0.0750, 0.0500, 0.0250, 0.0000.</li>
+  <li>Trend is valid only when the 50 SMA passes through the price body leading to the BOS, not just a wick.</li>
+  <li>Align FVG/OB with the SMA passthrough and PSY levels.</li></ul></div>
+ <div class="card p-5"><h3 class="font-semibold mb-2">1-minute LTF execution</h3><ul class="text-sm text-slate-300 space-y-1 list-disc pl-5">
+  <li>Entry gaps run hourly 07:00&ndash;18:00 SAST. First 15 minutes: LTF confirmation.</li>
+  <li>Golden period: 15&ndash;30 minutes past the hour.</li>
+  <li>Entry at 61.8% Fib overlapping the volume profile POC, a valid POI and a 1m PSY level (0.0875, 0.0625, 0.0375, 0.0125).</li></ul></div>
+ <div class="card p-5"><h3 class="font-semibold mb-3">Fibonacci expansion map (buy)</h3>
+  <div class="font-mono text-sm space-y-1.5">
+   <div class="flex justify-between rounded bg-emerald-500/10 px-3 py-1.5"><span>-100%</span><span>Take profit ceiling</span></div>
+   <div class="flex justify-between rounded bg-emerald-500/10 px-3 py-1.5"><span>-61.8%</span><span>Take profit floor</span></div>
+   <div class="flex justify-between rounded bg-blue-500/10 px-3 py-1.5"><span>0%</span><span>Breakeven trigger</span></div>
+   <div class="flex justify-between rounded bg-blue-500/20 px-3 py-1.5"><span>61.8%</span><span>Entry</span></div>
+   <div class="flex justify-between rounded bg-red-500/10 px-3 py-1.5"><span>78.6%</span><span>Stop loss</span></div></div></div>
+ <div class="card p-5 overflow-x-auto"><h3 class="font-semibold mb-1">Per-pair ratios (RCG Classic, 1:2000)</h3>
+  <p class="text-xs text-slate-400 mb-3">Percentages are of the margin for 0.01 lots. Reference lots are what R30 buys (R100 for BTCUSD).</p>
+  <table class="w-full text-xs sm:text-sm text-left"><thead class="text-slate-400"><tr><th class="py-1">Pair</th><th>0.01 margin</th><th>SL 5p</th><th>TP 15p</th><th>Ref lots</th></tr></thead><tbody id="ratios"></tbody></table></div>
+</section>
+</main>
+
+<div id="modal" class="hidden fixed inset-0 z-30 bg-black/60 grid place-items-center p-4">
+ <div class="card p-6 max-w-sm w-full"><h3 class="font-semibold mb-1">Clear everything?</h3>
+  <p class="text-sm text-slate-400 mb-4">This wipes your screenshots, notes, balance and checklist. It can&rsquo;t be undone.</p>
+  <div class="flex justify-end gap-2"><button id="no" class="px-3 py-1.5 rounded-lg border border-slate-600 text-sm">Cancel</button>
+  <button id="yes" class="px-3 py-1.5 rounded-lg bg-red-500 text-sm font-medium">Clear all</button></div></div>
+</div>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-700 text-sm px-4 py-2 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+
+<script>
+// ---------- DATA ----------
+const CATS=["15-Minute HTF Alignment","1-Minute LTF Execution","Risk & Trade Management"];
+const ITEMS=[
+["Establish Weekly Range","Mark 00:00 Monday external high/low boundaries",0],
+["Map Market Structure (Line Chart)","Identify impulses, corrections, BOS, and CHoCH",0],
+["Plot 15m PSY Levels","0.1000, 0.0750, 0.0500, 0.0250, 0.0000",0],
+["Validate 50-Period SMA","Must pass through price body leading to BOS, not just a wick",0],
+["Stack POI Confluences","Align FVG/OB with SMA passthrough and PSY levels",0],
+["Wait for Hourly Entry Gap","First 15 mins of the hour for LTF confirmation",1],
+["Measure Consolidation & Liquidity Sweep","Use volume profile; wait for high/low induction and opposite BOS",1],
+["Draw Fibonacci on Impulse","Measure the impulse that created the LTF BOS",1],
+["Identify Golden Period Entry","61.8% Fib overlapping POC, valid POI, and 1m PSY level (0.0875, etc.)",1],
+["Verify Margin & Lot Size","Scale dynamically (e.g., 0.01 lot per R50 balance)",2],
+["Set Defensive Stop Loss","Adjacent Fib level (max 5 pips FX, 50 pips BTC)",2],
+["Set Take Profit Target","Between -61.8% and -100% Fib expansion at major POI/PSY",2],
+["Plan Breakeven Trigger","Move SL to entry immediately when price breaks 0.0% Fib",2]
+].map((a,i)=>({id:String(i+1),label:a[0],sub:a[1],cat:a[2]}));
+// m = margin for 0.01 lots (R); sl/tp = % of that margin; ref = lots bought by refBal (PDF)
+const PAIRS={
+XAUUSD:{m:3.33,sl:258,tp:774,ref:.01,bal:30},GBPUSD:{m:1.11,sl:80.45,tp:241.34,ref:.08,bal:30},
+EURUSD:{m:.93,sl:122.18,tp:366.55,ref:.06,bal:30},USDCAD:{m:.83,sl:86.74,tp:260.22,ref:.10,bal:30},
+USDCHF:{m:.83,sl:144.58,tp:433.74,ref:.06,bal:30},AUDUSD:{m:.58,sl:165.79,tp:497.36,ref:.08,bal:30},
+NZDUSD:{m:.47,sl:140.42,tp:421.26,ref:.12,bal:30},BTCUSD:{m:29.07,sl:28.64,tp:85.92,ref:.02,bal:100}};
+
+// ---------- STATE ----------
+const KEY="smc-ict-assistant-v1",MAXF=2.5*1024*1024;
+const fresh=()=>({checked:{},notes:"",bal:"",pair:"XAUUSD",files:[],tab:0});
+let S=fresh();
+const $=id=>document.getElementById(id);
+function load(){try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(fresh(),JSON.parse(r));}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){toast("Storage full: remove a file to keep saving");return false}}
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>t.style.opacity=0,2400)}
+
+// ---------- CALCULATORS ----------
+const fmt=n=>"R"+n.toFixed(2);
+function calc(){
+ const b=parseFloat(S.bal)||0,p=PAIRS[S.pair];
+ let lots=0,note="";
+ if(S.pair==="BTCUSD"&&b<=100){note="BTCUSD is only traded if balance exceeds R100"}
+ else if(b>0){lots=Math.max(.01,Math.floor(p.ref*(b/p.bal)*100+1e-9)/100)}
+ const k=lots/.01;
+ return{lots,note,loss:k*p.m*p.sl/100,profit:k*p.m*p.tp/100,acct:(Math.floor(b/50)+1)/100};
+}
+
+// ---------- RENDERERS ----------
+function renderProgress(){const n=ITEMS.filter(i=>S.checked[i.id]).length;
+ $("cnt").textContent=n+" / 13";$("bar").style.width=(n/13*100)+"%"}
+function renderTabs(){
+ $("tabs").innerHTML=CATS.map((c,i)=>{const t=ITEMS.filter(x=>x.cat===i),d=t.filter(x=>S.checked[x.id]).length;
+  const on=S.tab===i;
+  return `<button data-tab="${i}" class="text-sm px-3 py-1.5 rounded-full transition-all duration-200 ${on?"bg-blue-600/20 text-blue-400":"text-slate-400 hover:bg-slate-700/60"}">${c} <span class="opacity-70 ml-1">${d}/${t.length}</span></button>`}).join("")}
+function renderItems(){
+ $("items").innerHTML=ITEMS.filter(i=>i.cat===S.tab).map(i=>{const on=!!S.checked[i.id];
+  return `<div data-id="${i.id}" class="flex gap-3 p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900 cursor-pointer transition-all duration-200 ${on?"opacity-60":""}">
+  <div class="mt-0.5 w-5 h-5 shrink-0 rounded-md border-2 grid place-items-center transition-all duration-200 ${on?"bg-blue-500 border-blue-500":"border-slate-500"}">
+  ${on?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M5 12l5 5 9-10"/></svg>':""}</div>
+  <div><div class="font-semibold text-sm">${i.label}</div><div class="text-xs text-slate-400 mt-0.5">${i.sub}</div></div></div>`}).join("")}
+function renderFiles(){
+ const f=S.files,t=$("thumbs");
+ $("droptxt").classList.toggle("hidden",f.length>0);t.classList.toggle("hidden",!f.length);$("addmore").classList.toggle("hidden",!f.length);
+ t.innerHTML=f.map((x,i)=>`<div class="relative group rounded-lg overflow-hidden bg-slate-900 border border-slate-700 aspect-video grid place-items-center">
+  ${x.type.startsWith("image/")?`<img src="${x.data}" alt="" class="w-full h-full object-cover">`:`<div class="text-xs text-slate-300 p-2 break-all">&#128196; ${esc(x.name)}</div>`}
+  <button data-rm="${i}" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 text-xs opacity-0 group-hover:opacity-100 transition-all duration-200" aria-label="Remove">&times;</button></div>`).join("")}
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function renderCalc(){
+ const r=calc();$("lot").textContent=r.lots.toFixed(2);$("lotnote").textContent=r.note;
+ $("loss").textContent=fmt(r.loss);$("profit").textContent=fmt(r.profit);
+ $("acct").textContent=(parseFloat(S.bal)>0)?"Account-interval rule (0.01 per R50 step): "+r.acct.toFixed(2)+" lots":""}
+function renderView(v){
+ $("dash").classList.toggle("hidden",v!=="dash");$("rules").classList.toggle("hidden",v!=="rules");
+ document.querySelectorAll(".vbtn").forEach(b=>b.className="vbtn px-3 sm:px-4 py-1 rounded-full transition-all duration-200 "+(b.dataset.view===v?"bg-blue-600 text-white":"text-slate-400 hover:text-slate-200"));
+ scrollTo(0,0)}
+function renderAll(){
+ $("notes").value=S.notes;$("bal").value=S.bal;$("pair").value=S.pair;
+ renderProgress();renderTabs();renderItems();renderFiles();renderCalc()}
+
+// ---------- FILES ----------
+function addFiles(list){
+ [...list].forEach(f=>{
+  if(f.size>MAXF){toast(f.name+" is over 2.5 MB, skipped");return}
+  const r=new FileReader();
+  r.onload=()=>{S.files.push({name:f.name,type:f.type||"file",data:r.result});
+   if(!save()){S.files.pop()}renderFiles()};
+  r.readAsDataURL(f)})}
+
+// ---------- EVENTS ----------
+function init(){
+ load();
+ $("pair").innerHTML=Object.keys(PAIRS).map(k=>`<option>${k}</option>`).join("");
+ $("ratios").innerHTML=Object.entries(PAIRS).map(([k,p])=>`<tr class="border-t border-slate-700"><td class="py-1.5 font-medium">${k}</td><td>R${p.m.toFixed(2)}</td><td>${p.sl}%</td><td>${p.tp}%</td><td>${p.ref.toFixed(2)} @ R${p.bal}</td></tr>`).join("");
+ renderAll();renderView("dash");
+ document.querySelectorAll(".vbtn").forEach(b=>b.onclick=()=>renderView(b.dataset.view));
+ $("tabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;S.tab=+b.dataset.tab;save();renderTabs();renderItems()};
+ $("items").onclick=e=>{const r=e.target.closest("[data-id]");if(!r)return;S.checked[r.dataset.id]=!S.checked[r.dataset.id];save();renderProgress();renderTabs();renderItems()};
+ let nt;$("notes").oninput=e=>{S.notes=e.target.value;clearTimeout(nt);nt=setTimeout(()=>{save();const s=$("saved");s.style.opacity=1;setTimeout(()=>s.style.opacity=0,1400)},600)};
+ $("bal").oninput=e=>{S.bal=e.target.value;save();renderCalc()};
+ $("pair").onchange=e=>{S.pair=e.target.value;save();renderCalc()};
+ const d=$("drop");
+ d.onclick=e=>{if(!e.target.closest("[data-rm]"))$("file").click()};
+ $("addmore").onclick=()=>$("file").click();
+ $("file").onchange=e=>{addFiles(e.target.files);e.target.value=""};
+ ["dragenter","dragover"].forEach(v=>d.addEventListener(v,e=>{e.preventDefault();d.classList.add("border-blue-500")}));
+ ["dragleave","drop"].forEach(v=>d.addEventListener(v,e=>{e.preventDefault();d.classList.remove("border-blue-500")}));
+ d.addEventListener("drop",e=>addFiles(e.dataTransfer.files));
+ $("thumbs").onclick=e=>{const b=e.target.closest("[data-rm]");if(!b)return;e.stopPropagation();S.files.splice(+b.dataset.rm,1);save();renderFiles()};
+ $("clear").onclick=()=>$("modal").classList.remove("hidden");
+ $("no").onclick=()=>$("modal").classList.add("hidden");
+ $("yes").onclick=()=>{try{localStorage.removeItem(KEY)}catch(e){}S=fresh();renderAll();$("modal").classList.add("hidden");toast("Dashboard cleared")};
+}
+// ---------- AI COACH ----------
+const RULES=["You are the system coach inside an SMC/ICT pre-trade dashboard for one trader. Judge setups ONLY against the trader's system below. Never invent or alter rules. If a screenshot can't confirm something, say what is unclear instead of guessing. You are not a financial advisor; be direct, concise, and point to specific checklist items.",
+"SYSTEM: Analyse DXY first for dollar bias. 1st priority: XAUUSD, GBPUSD, EURUSD (if news supports). 2nd priority: USDCHF, USDCAD (only with news that day 9:00-17:00 SAST). BTCUSD only at weekends and only if balance exceeds R100.",
+"15m HTF: mark 00:00 Monday of the previous week, external high/low; read structure on the line chart (impulses, corrections, BOS, CHoCH); plot 15m PSY levels 0.1000, 0.0750, 0.0500, 0.0250, 0.0000; the 50 SMA validates structure only if it passes through the price body leading to the BOS, not just a wick; a reversal is valid only if it breaks a high/low that the SMA passed through; align FVG/OB/supply-demand/S&R with the SMA zone and PSY level.",
+"1m LTF: find consolidation, measure it with the volume profile, wait for the high/low to be broken or induced, then a BOS the opposite way, then a retracement to the POC aligned with other confluences. Measure the internal range. 1m PSY levels: 0.0875, 0.0625, 0.0375, 0.0125. Entry gaps run hourly 07:00-18:00 SAST: first 15 minutes = LTF confirmation (BOS, PSY alignment, valid POI, SMA); golden period = 15-30 minutes past the hour. Fib the impulse that made the BOS (-1, -0.618, 0, 0.382, 0.5, 0.618, 0.786, 1). Entry at 61.8% overlapping POC, valid POI, BOS, SMA passthrough zone and a PSY level, during the golden period.",
+"RISK: SL at the adjacent Fib level (entry 61.8% -> SL 78.6%), max 5 pips on FX, 50 pips on BTCUSD. TP between -61.8% and -100%, min 15 pips (150 on BTCUSD), aligned with a POI or PSY level. Breakeven: once price breaks 0.0% Fib, move SL to entry. Lot sizing uses the per-pair ratios from the trader's RCG Classic (1:2000) table, shown in the dashboard state below.",
+"OUTPUT FORMAT: Write plain text only (no markdown symbols like ** or #). Answer the question first, then ALWAYS finish with a section that starts with the line SUMMARY and has exactly these three parts. 1) BIAS: Bullish, Bearish or Neutral, with a one or two line basis taken from the analysis (structure, BOS/CHoCH, SMA, PSY levels, DXY if visible). If the evidence is unclear or conflicting, say Neutral and why. 2) NOT COVERED: list by name every checklist item that is unticked, plus any ticked item the screenshots or notes do not actually support. If every item is covered, say so. 3) RECOMMENDATIONS: what should happen next, as short numbered steps tied to the system (for example what to mark or confirm, whether to wait for the next golden period, where entry, stop loss, take profit and breakeven would sit, and when to stand aside). Never recommend anything that breaks the system rules."].join("\n");
+let turns=[],ctl=null,busy=false;
+function ctx(){
+ const r=calc(),L=[];
+ CATS.forEach((c,i)=>{L.push(c+":");ITEMS.filter(x=>x.cat===i).forEach(x=>L.push((S.checked[x.id]?"  [x] ":"  [ ] ")+x.label))});
+ L.push("Instrument: "+S.pair+"; balance: R"+(S.bal||"not entered"));
+ L.push("Calculator: "+r.lots.toFixed(2)+" lots, loss at SL "+fmt(r.loss)+", profit at min TP "+fmt(r.profit)+(r.note?" ("+r.note+")":""));
+ L.push("Setup notes: "+(S.notes.trim()||"(none)"));
+ L.push("Uploaded files: "+(S.files.map(f=>f.name).join(", ")||"(none)"));
+ return L.join("\n")}
+function bubble(role,text){const d=document.createElement("div");d.className="rounded-xl px-3 py-2 text-sm whitespace-pre-wrap "+(role==="user"?"bg-blue-600/20 ml-8":"bg-slate-900/70 mr-8");d.textContent=text;$("msgs").appendChild(d);$("msgs").scrollTop=1e9;return d}
+function dataToBlob(u){const p=u.split(","),m=/:(.*?);/.exec(p[0]),b=atob(p[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:m?m[1]:"image/png"})}
+const ERR={not_granted:"Claude access was declined for this page.",rate_limited:"Too many requests or usage limit reached. Try again later.",image_rejected:"One of the images couldn’t be used. Remove it or untick “Include my screenshots”.",session_expired:"Please sign in to Claude again.",refused:"Claude declined that request. Try rephrasing.",upstream_error:"Something went wrong. Try again."};
+async function initCoach(){
+ let sample=null;try{sample=window.claude&&await claude.use("sample")}catch(e){}
+ if(!sample){$("coachoff").classList.remove("hidden");return}
+ $("coachon").classList.remove("hidden");
+ let lim=null;try{lim=await sample.limits()}catch(e){}
+ const img=lim&&lim.images;
+ if(!img)$("inclwrap").classList.add("hidden");
+ async function send(q){
+  q=q.trim();if(busy||!q)return;busy=true;$("q").value="";
+  $("send").classList.add("hidden");$("stop").classList.remove("hidden");
+  bubble("user",q);const b=bubble("ai","Thinking…");
+  turns.push({role:"user",content:q});
+  ctl=new AbortController();
+  const opts={cache:false,signal:ctl.signal,onText:({text})=>{b.textContent=text;$("msgs").scrollTop=1e9}};
+  try{
+   if(img&&$("incl").checked){
+    const ok=img.mediaTypes||[];
+    const bl=S.files.filter(f=>f.type.startsWith("image/")&&f.data.startsWith("data:")&&(!ok.length||ok.includes(f.type))).slice(0,img.maxCount||4).map(f=>dataToBlob(f.data));
+    if(bl.length)opts.images=bl}
+   const hist=turns.slice(-11);
+   const {text}=await sample([{role:"user",content:RULES+"\n\nCURRENT DASHBOARD STATE:\n"+ctx()},...hist],opts);
+   turns.push({role:"assistant",content:text});
+  }catch(e){
+   turns.pop();
+   if(e.code==="cancelled"){b.textContent=(e.text||"")+"\n(stopped)"}
+   else b.textContent=(e.text?e.text+"\n":"")+(ERR[e.code]||ERR.upstream_error);
+   if(e.code==="not_granted"||e.code==="sampling_disabled")$("coachon").classList.add("hidden"),$("coachoff").classList.remove("hidden");
+  }finally{busy=false;$("send").classList.remove("hidden");$("stop").classList.add("hidden")}
+ }
+ $("send").onclick=()=>send($("q").value);
+ $("q").onkeydown=e=>{if(e.key==="Enter")send($("q").value)};
+ $("stop").onclick=()=>ctl&&ctl.abort();
+ $("quick").onclick=e=>{const b=e.target.closest("[data-q]");if(b)send(b.dataset.q)};
+}
+init();
+initCoach();
+</script>
+</body>
+</html>
